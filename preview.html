@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Muzeau Drink Terminal</title>
+  <meta name="description" content="Menu mobile du bar de l'Espace Muzeau" />
+  <meta name="theme-color" content="#000000" />
+
+  <style>
+    @font-face {
+      font-family: "DotMatrix";
+      src: url("./DOTMATRI.TTF") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "DotMatrixBold";
+      src: url("./DOTMBold.TTF") format("truetype");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --bg: #000000;
+      --bg-deep: #050505;
+      --text: #ff4a1f;
+      --text-dim: rgba(255, 74, 31, 0.72);
+      --text-faint: rgba(255, 74, 31, 0.42);
+      --line: rgba(255, 74, 31, 0.28);
+      --line-strong: rgba(255, 74, 31, 0.48);
+      --glow-soft: rgba(255, 74, 31, 0.14);
+      --maxw: 460px;
+      --pad: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      background: #000;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 74, 31, 0.045), transparent 38%),
+        linear-gradient(to bottom, #020202, #000000 22%, #010101 68%, #000000);
+      color: var(--text);
+      font-family: "DotMatrix", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      -webkit-font-smoothing: none;
+      -moz-osx-font-smoothing: auto;
+      image-rendering: pixelated;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Fine LED / scan texture */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.028) 0px,
+          rgba(255,255,255,0.028) 1px,
+          transparent 1px,
+          transparent 3px
+        ),
+        repeating-linear-gradient(
+          to right,
+          rgba(255, 74, 31, 0.03) 0px,
+          rgba(255, 74, 31, 0.03) 1px,
+          transparent 1px,
+          transparent 4px
+        );
+      opacity: 0.42;
+      mix-blend-mode: screen;
+    }
+
+    /* Slight burnoff / vignette */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(to bottom,
+          rgba(255,74,31,0.08),
+          transparent 18%,
+          transparent 82%,
+          rgba(255,74,31,0.06)),
+        radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.34) 100%);
+      opacity: 0.95;
+    }
+
+    .wrap {
+      width: min(100%, var(--maxw));
+      margin: 0 auto;
+      padding: 8px 8px 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .terminal {
+      position: relative;
+      border-left: 1px solid var(--line-strong);
+      border-right: 1px solid var(--line-strong);
+      background:
+        linear-gradient(to bottom,
+          rgba(255, 74, 31, 0.018),
+          rgba(255, 74, 31, 0.006) 16%,
+          rgba(255, 74, 31, 0.01) 100%);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 74, 31, 0.03),
+        0 0 18px rgba(255, 74, 31, 0.04);
+    }
+
+    .terminal::before,
+    .terminal::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .terminal::before { top: 0; }
+    .terminal::after { bottom: 0; }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px var(--pad) 8px;
+      border-bottom: 1px solid var(--line);
+      color: var(--text-faint);
+      font-size: 0.64rem;
+      line-height: 1.2;
+    }
+
+    .topbar-left {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-right {
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    header {
+      padding: 16px var(--pad) 14px;
+      border-bottom: 1px solid var(--line-strong);
+      text-align: left;
+    }
+
+    .system-id {
+      margin: 0 0 8px;
+      color: var(--text-faint);
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+    }
+
+    .brand {
+      margin: 0;
+      font-family: "DotMatrixBold", "DotMatrix", monospace;
+      font-size: clamp(2rem, 9vw, 2.65rem);
+      line-height: 0.9;
+      letter-spacing: 0.12em;
+      text-shadow:
+        0 0 2px rgba(255, 74, 31, 0.85),
+        0 0 8px rgba(255, 74, 31, 0.18);
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 10px;
+      font-size: 0.42em;
+      line-height: 1.15;
+      letter-spacing: 0.16em;
+      color: var(--text-dim);
+    }
+
+    .venue {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      color: var(--text-dim);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+
+    .section {
+      padding: 14px var(--pad) 14px;
+      border-bottom: 1px solid rgba(255, 74, 31, 0.16);
+    }
+
+    .section:last-of-type {
+      border-bottom: 0;
+    }
+
+    .section-head {
+      margin-bottom: 12px;
+    }
+
+    .section-code {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text-faint);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+    }
+
+    .section-title {
+      margin: 0;
+      font-family: "DotMatrixBold", "DotMatrix", monospace;
+      font-size: clamp(1rem, 4.6vw, 1.24rem);
+      line-height: 1.1;
+      letter-spacing: 0.16em;
+      text-shadow: 0 0 5px rgba(255, 74, 31, 0.14);
+    }
+
+    .divider {
+      margin-top: 8px;
+      color: var(--text-faint);
+      font-size: 0.72rem;
+      white-space: nowrap;
+      overflow: hidden;
+      line-height: 1;
+    }
+
+    .menu-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: end;
+      min-width: 0;
+      font-size: clamp(0.92rem, 3.85vw, 1.02rem);
+      line-height: 1.12;
+    }
+
+    .name {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .price {
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .leader {
+      min-width: 10px;
+      height: 0.8em;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .leader::before {
+      content: "................................................................................................................................................................";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -0.12em;
+      white-space: nowrap;
+      overflow: hidden;
+      color: rgba(255, 74, 31, 0.54);
+      letter-spacing: 0.06em;
+      font-size: 0.84em;
+      line-height: 1;
+    }
+
+    .block-note {
+      margin: 0 0 12px;
+      color: var(--text-dim);
+      font-family: "DotMatrixBold", "DotMatrix", monospace;
+      font-size: 0.9rem;
+      line-height: 1.25;
+    }
+
+    .plain-list {
+      display: grid;
+      gap: 7px;
+      font-size: clamp(0.92rem, 3.85vw, 1.02rem);
+      line-height: 1.12;
+    }
+
+    .plain-list div {
+      position: relative;
+      padding-left: 1.1em;
+    }
+
+    .plain-list div::before {
+      content: ">";
+      position: absolute;
+      left: 0;
+      color: var(--text-faint);
+    }
+
+    .subnote {
+      margin: 12px 0 0;
+      color: var(--text-dim);
+      font-size: 0.76rem;
+      line-height: 1.45;
+    }
+
+    footer {
+      padding: 14px var(--pad) 18px;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .footer-rule {
+      margin-bottom: 10px;
+      color: var(--text-faint);
+      font-size: 0.72rem;
+      white-space: nowrap;
+      overflow: hidden;
+      line-height: 1;
+    }
+
+    .footer-copy {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      line-height: 1.55;
+    }
+
+    .footer-copy strong {
+      color: var(--text);
+      font-family: "DotMatrixBold", "DotMatrix", monospace;
+      font-weight: 700;
+    }
+
+    .ghost {
+      color: transparent;
+    }
+
+    @media (max-width: 390px) {
+      :root {
+        --pad: 10px;
+      }
+
+      .topbar {
+        font-size: 0.58rem;
+      }
+
+      .venue,
+      .footer-copy {
+        font-size: 0.75rem;
+      }
+
+      .item,
+      .plain-list {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="terminal">
+
+      <div class="topbar">
+        <div class="topbar-left">MUZEAU / BAR SYSTEM / MOBILE DISPLAY UNIT</div>
+        <div class="topbar-right">MENU // V1.0</div>
+      </div>
+
+      <header>
+        <p class="system-id">NODE 58 — WELLINGTON N / SHERBROOKE / QC</p>
+        <h1 class="brand">
+          MUZEAU
+          <span>DRINK TERMINAL</span>
+        </h1>
+
+        <div class="venue">
+          ESPACE MUZEAU<br>
+          58 WELLINGTON N<br>
+          SHERBROOKE
+        </div>
+      </header>
+
+      <main>
+        <section class="section">
+          <div class="section-head">
+            <span class="section-code">[ 01 ] BAR / MIXED DRINKS</span>
+            <h2 class="section-title">DRINKS</h2>
+            <div class="divider">████████████████████████████████</div>
+          </div>
+
+          <div class="menu-list">
+            <div class="item"><span class="name">MOJITO</span><span class="leader"></span><span class="price">9 / 12</span></div>
+            <div class="item"><span class="name">BLOODY CESAR</span><span class="leader"></span><span class="price">9 / 12</span></div>
+            <div class="item"><span class="name">RHUM &amp; COKE</span><span class="leader"></span><span class="price">9 / 12</span></div>
+            <div class="item"><span class="name">WHISKY &amp; COKE</span><span class="leader"></span><span class="price">9 / 12</span></div>
+            <div class="item"><span class="name">GIN TONIC</span><span class="leader"></span><span class="price">9 / 12</span></div>
+            <div class="item"><span class="name">VODKA RED BULL</span><span class="leader"></span><span class="price">9 / 12</span></div>
+            <div class="item"><span class="name">KOMBUCHA MIX</span><span class="leader"></span><span class="price">9 / 12</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <span class="section-code">[ 02 ] PREMIUM COCKTAILS</span>
+            <h2 class="section-title">COCKTAILS DE LUXE</h2>
+            <div class="divider">████████████████████████████████</div>
+          </div>
+
+          <div class="menu-list">
+            <div class="item"><span class="name">COSMOPOLITAN</span><span class="leader"></span><span class="price">14</span></div>
+            <div class="item"><span class="name">LONG ISLAND</span><span class="leader"></span><span class="price">14</span></div>
+            <div class="item"><span class="name">OLD FASHIONED</span><span class="leader"></span><span class="price">14</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <span class="section-code">[ 03 ] BEER</span>
+            <h2 class="section-title">BIÈRES</h2>
+            <div class="divider">████████████████████████████████</div>
+          </div>
+
+          <div class="menu-list">
+            <div class="item"><span class="name">TRAIN HOPPER</span><span class="leader"></span><span class="price">9</span></div>
+            <div class="item"><span class="name">LÉGER MEXICAIN</span><span class="leader"></span><span class="price">9</span></div>
+            <div class="item"><span class="name">AMERICAN ALE</span><span class="leader"></span><span class="price">9</span></div>
+            <div class="item"><span class="name">SÛRE</span><span class="leader"></span><span class="price">9</span></div>
+            <div class="item"><span class="name">1664</span><span class="leader"></span><span class="price">6</span></div>
+            <div class="item"><span class="name">CORONA</span><span class="leader"></span><span class="price">6</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <span class="section-code">[ 04 ] SHOTS</span>
+            <h2 class="section-title">SHOOTERS</h2>
+            <div class="divider">████████████████████████████████</div>
+          </div>
+
+          <p class="block-note">UNIT PRICE // 4</p>
+
+          <div class="plain-list">
+            <div>VODKA WARD</div>
+            <div>TEQUILA</div>
+            <div>RHUM</div>
+            <div>WHISKY</div>
+            <div>GIN</div>
+            <div>TGV</div>
+            <div>FIREBALL</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <span class="section-code">[ 05 ] SPECIAL SPIRITS</span>
+            <h2 class="section-title">SPIRITUEUX SPÉCIAUX</h2>
+            <div class="divider">████████████████████████████████</div>
+          </div>
+
+          <div class="menu-list">
+            <div class="item"><span class="name">VODKA ÉRABLE — CHERRY RIVER</span><span class="leader"></span><span class="price">5</span></div>
+            <div class="item"><span class="name">ROSEMONT WHISKY — SMOKY</span><span class="leader"></span><span class="price">5</span></div>
+            <div class="item"><span class="name">TEQUILA SILVER — CHERRY RIVER</span><span class="leader"></span><span class="price">5</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <span class="section-code">[ 06 ] NON ALCOHOLIC</span>
+            <h2 class="section-title">SANS ALCOOL</h2>
+            <div class="divider">████████████████████████████████</div>
+          </div>
+
+          <div class="menu-list">
+            <div class="item"><span class="name">VITAMIN WATER</span><span class="leader"></span><span class="price">5</span></div>
+            <div class="item"><span class="name">KOMBUCHA</span><span class="leader"></span><span class="price">5.5</span></div>
+            <div class="item"><span class="name">KWE</span><span class="leader"></span><span class="price">5</span></div>
+            <div class="item"><span class="name">EAU</span><span class="leader"></span><span class="price">1</span></div>
+            <div class="item"><span class="name">RED BULL</span><span class="leader"></span><span class="price">6</span></div>
+            <div class="item"><span class="name">COKE</span><span class="leader"></span><span class="price">3.5</span></div>
+            <div class="item"><span class="name">SEVEN UP</span><span class="leader"></span><span class="price">3.5</span></div>
+            <div class="item"><span class="name">FRAPPUCCINO MOCHA</span><span class="leader"></span><span class="price">6</span></div>
+            <div class="item"><span class="name">ARIZONA</span><span class="leader"></span><span class="price">3</span></div>
+            <div class="item"><span class="name">SCHWEPPES</span><span class="leader"></span><span class="price">3.5</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <span class="section-code">[ 07 ] FOOD / COUNTER</span>
+            <h2 class="section-title">SNACKS</h2>
+            <div class="divider">████████████████████████████████</div>
+          </div>
+
+          <div class="menu-list">
+            <div class="item"><span class="name">CHIPS</span><span class="leader"></span><span class="price ghost">--</span></div>
+            <div class="item"><span class="name">NUTS</span><span class="leader"></span><span class="price ghost">--</span></div>
+            <div class="item"><span class="name">POPCORN</span><span class="leader"></span><span class="price">FREE</span></div>
+            <div class="item"><span class="name">BARRE CHOCOLAT</span><span class="leader"></span><span class="price ghost">--</span></div>
+            <div class="item"><span class="name">BRETZEL</span><span class="leader"></span><span class="price ghost">--</span></div>
+          </div>
+
+          <p class="subnote">PRIX EN ATTENTE POUR CERTAINS ITEMS.</p>
+        </section>
+      </main>
+
+      <footer>
+        <div class="footer-rule">██████████████████████████████████████</div>
+        <div class="footer-copy">
+          <strong>ESPACE MUZEAU</strong><br>
+          58 WELLINGTON N<br>
+          SHERBROOKE<br>
+          SUPPORT ELECTRONIC CULTURE
+        </div>
+      </footer>
+
+    </div>
+  </div>
+</body>
+</html>
